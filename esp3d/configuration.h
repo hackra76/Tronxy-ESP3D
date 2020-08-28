@@ -186,7 +186,7 @@
 #define WEB_UPDATE_FEATURE
 
 //NOTIFICATION_FEATURE : allow to push notifications
-#define NOTIFICATION_FEATURE
+//#define NOTIFICATION_FEATURE
 
 //For ESP8266 Only, it define which secure client to use AXTls or BearSSL
 //#define USING_AXTLS
