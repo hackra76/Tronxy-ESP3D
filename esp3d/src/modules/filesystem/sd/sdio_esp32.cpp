@@ -31,6 +31,10 @@ extern File tSDFile_handle[ESP_MAX_SD_OPENHANDLE];
 
 #define SDMMC_FORCE_BEGIN
 
+#ifndef SD_ONE_BIT_MODE
+#define SD_ONE_BIT_MODE false
+#endif //SD_ONE_BIT_MODE
+
 uint8_t ESP_SD::getState(bool refresh)
 {
     static bool lastinitok = false;
@@ -57,7 +61,7 @@ uint8_t ESP_SD::getState(bool refresh)
     if (!lastinitok) {
         log_esp3d("last init was failed try sd_mmc begin");
         //SD_MMC.end();
-        if (SD_MMC.begin()) {
+        if (SD_MMC.begin("/sdcard", SD_ONE_BIT_MODE)) {
             log_esp3d("sd_mmc begin succeed");
             if (SD_MMC.cardType() != CARD_NONE ) {
                 _state = ESP_SDCARD_IDLE;
@@ -78,7 +82,7 @@ uint8_t ESP_SD::getState(bool refresh)
             lastinitok = false;
             log_esp3d("Soft sd check failed");
             //SD_MMC.end();
-            if (SD_MMC.begin()) {
+            if (SD_MMC.begin("/sdcard", SD_ONE_BIT_MODE)) {
                 log_esp3d("new sd_mmc begin succeed");
                 if ( SD_MMC.cardType() != CARD_NONE ) {
                     _state = ESP_SDCARD_IDLE;
@@ -148,10 +152,12 @@ ESP_SDFile ESP_SD::open(const char* path, uint8_t mode)
 {
     //do some check
     if(((strcmp(path,"/") == 0) && ((mode == ESP_FILE_WRITE) || (mode == ESP_FILE_APPEND))) || (strlen(path) == 0)) {
+        log_esp3d("File open check : failed");
         return ESP_SDFile();
     }
     // path must start by '/'
     if (path[0] != '/') {
+        log_esp3d("File open path is invalid");
         return ESP_SDFile();
     }
     if (mode != ESP_FILE_READ) {
@@ -159,7 +165,7 @@ ESP_SDFile ESP_SD::open(const char* path, uint8_t mode)
         String p = path;
         p.remove(p.lastIndexOf('/') +1);
         if (!exists(p.c_str())) {
-            log_esp3d("Error opening: %s", path);
+            log_esp3d("Error opening: %s, %s does not exists", path,p.c_str());
             return ESP_SDFile();
         }
     }
@@ -171,13 +177,18 @@ ESP_SDFile ESP_SD::open(const char* path, uint8_t mode)
 bool ESP_SD::exists(const char* path)
 {
     bool res = false;
+    String p = path;
     //root should always be there if started
-    if (strcmp(path, "/") == 0) {
+    if (p == "/")  {
         return _started;
     }
-    res = SD_MMC.exists(path);
+
+    if (p.endsWith("/")) {
+        p.remove( p.length() - 1,1);
+    }
+    res = SD_MMC.exists(p);
     if (!res) {
-        ESP_SDFile root = ESP_SD::open(path, ESP_FILE_READ);
+        ESP_SDFile root = ESP_SD::open(p.c_str(), ESP_FILE_READ);
         if (root) {
             res = root.isDirectory();
         }
@@ -192,7 +203,11 @@ bool ESP_SD::remove(const char *path)
 
 bool ESP_SD::mkdir(const char *path)
 {
-    return SD_MMC.mkdir(path);
+    String p = path;
+    if (p.endsWith("/")) {
+        p.remove( p.length() - 1,1);
+    }
+    return SD_MMC.mkdir(p.c_str());
 }
 
 bool ESP_SD::rmdir(const char *path)
@@ -203,6 +218,9 @@ bool ESP_SD::rmdir(const char *path)
     bool res = true;
     GenLinkedList<String > pathlist;
     String p = path;
+    if (p.endsWith("/")) {
+        p.remove( p.length() - 1,1);
+    }
     pathlist.push(p);
     while (pathlist.count() > 0) {
         File dir = SD_MMC.open(pathlist.getLast().c_str());
