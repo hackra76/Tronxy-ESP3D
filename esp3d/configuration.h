@@ -210,12 +210,6 @@
 //#define CAMERA_DEVICE_FLIP_HORIZONTALY//comment to disable
 #define CUSTOM_CAMERA_NAME "ESP32-CAM"
 
-////////////////////////////////////////////////
-//Warning until fix is found
-#if defined(CAMERA_DEVICE) && defined(FTP_FEATURE)
-#warning currently Camera and FTP server do not work together, disabling FTP SERVER
-#undef FTP_FEATURE
-#endif
 
 //Allow remote access by enabling cross origin access
 //check https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS
@@ -273,6 +267,9 @@
 
 //Serial rx buffer size is 256 but can be extended
 #define SERIAL_RX_BUFFER_SIZE 512
+
+//Serial need speed up on esp32
+#define SERIAL_INDEPENDANT_TASK
 
 /************************************
  *

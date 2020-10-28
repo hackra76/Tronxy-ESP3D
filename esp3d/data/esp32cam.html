@@ -541,14 +541,28 @@
             </div>
         </section>
         <script>
-        var camera_port = "9600"
-document.addEventListener('DOMContentLoaded', function (event) {
-  var baseHost = document.location.origin
-  var streamUrl = baseHost + ':' + camera_port;
-
-  const hide = el => {
-    el.classList.add('hidden')
-  }
+        var streamUrl
+        var dopolling = false
+        function refresh(){
+        if (document.getElementById('stream')){
+            if (dopolling) {
+                try {
+                    document.getElementById("stream").src= `${streamUrl}/snap?t=` + new Date().getTime();
+                    console.log("update")
+            } catch(e){
+                    console.log("failed")
+                }
+                
+            } 
+        }
+     }
+    document.addEventListener('DOMContentLoaded', function (event) {
+            var baseHost = document.location.origin
+            streamUrl = baseHost 
+            const hide = el => {
+            el.classList.add('hidden')
+            setInterval(refresh, 200);
+            }
   const show = el => {
     el.classList.remove('hidden')
   }
@@ -612,7 +626,7 @@ document.addEventListener('DOMContentLoaded', function (event) {
         return
     }
 
-    const query = `${baseHost}/command?cmd=` + encodeURIComponent(`[ESP172]${el.id}=${value}`)
+    const query = `${baseHost}/command?cmd=` + encodeURIComponent(`[ESP170]${el.id}=${value}`)
 
     fetch(query)
       .then(response => {
@@ -634,10 +648,8 @@ document.addEventListener('DOMContentLoaded', function (event) {
       return response.json()
     })
     .then(function (info) {
-       //get stream port
-       camera_port = info.Cam_port;
        document.title = info.Cam_name;
-       fetch(`${baseHost}/command?cmd=` + encodeURIComponent(`[ESP172]`))
+       fetch(`${baseHost}/command?cmd=` + encodeURIComponent(`[ESP170]`))
     .then(function (response) {
       return response.json()
     })
@@ -656,14 +668,16 @@ document.addEventListener('DOMContentLoaded', function (event) {
   const closeButton = document.getElementById('close-stream')
 
   const stopStream = () => {
-    window.stop();
+    //window.stop();
     streamButton.innerHTML = 'Start Stream'
+    dopolling = false
   }
 
   const startStream = () => {
-    view.src = `${streamUrl}/stream`
+    view.src = `${streamUrl}/snap`
     show(viewContainer)
     streamButton.innerHTML = 'Stop Stream'
+    dopolling = true
   }
 
   // Attach actions to buttons
