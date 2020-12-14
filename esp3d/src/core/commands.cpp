@@ -371,8 +371,8 @@ bool Commands::execute_internal_command (int cmd, const char* cmd_params, level_
         response = ESP140(cmd_params, auth_type, output);
         break;
 #endif //TIMESTAMP_FEATURE
-    //Get/Set boot delay
-    //[ESP150]<time>[pwd=<admin password>]
+    //Get/Set display/set boot delay in ms / Verbose boot
+    //[ESP150]<delay=time in milliseconds><verbose=YES/NO>[pwd=<admin password>]
     case 150:
         response = ESP150(cmd_params, auth_type, output);
         break;
@@ -414,6 +414,18 @@ bool Commands::execute_internal_command (int cmd, const char* cmd_params, level_
     case 200:
         response = ESP200(cmd_params, auth_type, output);
         break;
+    //Get/Set SD card Speed factor 1 2 4 6 8 16 32
+    //[ESP202]SPEED=<value>pwd=<user/admin password>
+    case 202:
+        response = ESP202(cmd_params, auth_type, output);
+        break;
+#ifdef SD_UPDATE_FEATURE
+    //Get/Set SD Check at boot state which can be ON, OFF
+    //[ESP402]<state>pwd=<admin password>
+    case 402:
+        response = ESP402(cmd_params, auth_type, output);
+        break;
+#endif //#ifdef SD_UPDATE_FEATURE
 #endif //SD_DEVICE
 #ifdef DIRECT_PIN_FEATURE
     //Get/Set pin value
@@ -596,6 +608,11 @@ bool Commands::execute_internal_command (int cmd, const char* cmd_params, level_
         response = ESP910(cmd_params, auth_type, output);
         break;
 #endif //BUZZER_DEVICE
+    case 920:
+        //Get state / Set state of output message clients
+        //[ESP910]<SERIAL / LCD / PRINTER_LCD/ WEBSOCKET / TELNET /BT / ALL>=<ON/OFF>[pwd=<admin password>]
+        response = ESP920(cmd_params, auth_type, output);
+        break;
     default:
         output->printERROR ("Invalid Command");
         response = false;

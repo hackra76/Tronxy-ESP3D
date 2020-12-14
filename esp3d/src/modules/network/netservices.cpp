@@ -91,20 +91,26 @@ bool NetServices::begin()
         } else {
             String tmp = "Current time :";
             tmp+=timeserver.current_time();
-            output.printMSG(tmp.c_str());
+            if (Settings_ESP3D::isVerboseBoot()) {
+                output.printMSG(tmp.c_str());
+            }
         }
     }
 #endif //TIMESTAMP_FEATURE
+
 #if defined(MDNS_FEATURE) && defined(ARDUINO_ARCH_ESP8266)
     if(WiFi.getMode() != WIFI_AP) {
         String lhostname =hostname;
         lhostname.toLowerCase();
+        log_esp3d("Start mdsn for %s", hostname.c_str());
         if (!MDNS.begin(hostname.c_str())) {
             output.printERROR("mDNS failed to start");
             _started =false;
         } else {
             String stmp = "mDNS started with '" + lhostname + ".local'";
-            output.printMSG(stmp.c_str());
+            if (Settings_ESP3D::isVerboseBoot()) {
+                output.printMSG(stmp.c_str());
+            }
         }
     }
 #endif //MDNS_FEATURE && ARDUINO_ARCH_ESP8266
@@ -152,7 +158,12 @@ bool NetServices::begin()
                 output.printERROR("End Failed");
             }
         });
-        output.printMSG("OTA service started");
+        if (Settings_ESP3D::isVerboseBoot()) {
+            output.printMSG("OTA service started");
+        }
+        String lhostname =hostname;
+        lhostname.toLowerCase();
+        ArduinoOTA.setHostname(hostname.c_str());
         ArduinoOTA.begin();
     }
 #endif
@@ -166,7 +177,9 @@ bool NetServices::begin()
             _started =false;
         } else {
             String stmp = "mDNS started with '" + lhostname + ".local'";
-            output.printMSG(stmp.c_str());
+            if (Settings_ESP3D::isVerboseBoot()) {
+                output.printMSG(stmp.c_str());
+            }
         }
     }
 #endif //MDNS_FEATURE && ARDUINO_ARCH_ESP8266
@@ -176,7 +189,9 @@ bool NetServices::begin()
         // if DNSServer is started with "*" for domain name, it will reply with
         // provided IP to all DNS request
         if (dnsServer.start(DNS_PORT, "*", WiFi.softAPIP())) {
-            output.printMSG("Captive Portal started");
+            if (Settings_ESP3D::isVerboseBoot()) {
+                output.printMSG("Captive Portal started");
+            }
         } else {
             output.printERROR("Failed start Captive Portal");
         }
@@ -190,7 +205,9 @@ bool NetServices::begin()
     } else {
         if(HTTP_Server::started()) {
             String stmp = "HTTP server started port " + String(HTTP_Server::port());
-            output.printMSG(stmp.c_str());
+            if (Settings_ESP3D::isVerboseBoot()) {
+                output.printMSG(stmp.c_str());
+            }
         }
     }
 #endif //HTTP_FEATURE
@@ -201,7 +218,9 @@ bool NetServices::begin()
     } else {
         if(telnet_server.started()) {
             String stmp = "Telnet server started port " + String(telnet_server.port());
-            output.printMSG(stmp.c_str());
+            if (Settings_ESP3D::isVerboseBoot()) {
+                output.printMSG(stmp.c_str());
+            }
         }
     }
 #endif //TELNET_FEATURE
@@ -212,7 +231,9 @@ bool NetServices::begin()
     } else {
         if(ftp_server.started()) {
             String stmp = "Ftp server started ports: " + String(ftp_server.ctrlport()) + ","+ String(ftp_server.dataactiveport()) + ","+ String(ftp_server.datapassiveport());
-            output.printMSG(stmp.c_str());
+            if (Settings_ESP3D::isVerboseBoot()) {
+                output.printMSG(stmp.c_str());
+            }
         }
     }
 #endif //FTP_FEATURE
@@ -222,7 +243,9 @@ bool NetServices::begin()
     } else {
         if (websocket_data_server.started()) {
             String stmp = "Websocket server started port " + String(websocket_data_server.port());
-            output.printMSG(stmp.c_str());
+            if (Settings_ESP3D::isVerboseBoot()) {
+                output.printMSG(stmp.c_str());
+            }
         }
     }
 #endif //WS_DATA_FEATURE
@@ -234,9 +257,12 @@ bool NetServices::begin()
 #ifdef MDNS_FEATURE
     if(WiFi.getMode() != WIFI_AP) {
         // Add service to MDNS-SD
-        MDNS.addService("http", "tcp", HTTP_Server::port());
-        // TODO add TXT records
-        //MDNS.addServiceTxt("http", "tcp", Key, value);
+        log_esp3d("Add mdns service http / tcp port %d", HTTP_Server::port());
+        if (!MDNS.addService("http", "tcp", HTTP_Server::port())) {
+            log_esp3d("failed");
+        }
+        //Add TXT records
+        MDNS.addServiceTxt("http", "tcp", "ESP3D", FW_VERSION);
     }
 #endif //MDNS_FEATURE
 #ifdef SSDP_FEATURE
@@ -258,7 +284,9 @@ bool NetServices::begin()
         SSDP.setManufacturerURL (ESP_MANUFACTURER_URL);
         SSDP.begin();
         stmp = "SSDP started with '" + hostname + "'";
-        output.printMSG(stmp.c_str());
+        if (Settings_ESP3D::isVerboseBoot()) {
+            output.printMSG(stmp.c_str());
+        }
     }
 #endif //SSDP_FEATURE
 #ifdef NOTIFICATION_FEATURE
@@ -306,7 +334,10 @@ void NetServices::end()
 #if defined(ARDUINO_ARCH_ESP8266)
         String hostname = Settings_ESP3D::read_string(ESP_HOSTNAME);
         hostname.toLowerCase();
-        MDNS.removeService(hostname.c_str(),"http", "tcp");
+        log_esp3d("Remove mdns for %s", hostname.c_str());
+        if (!MDNS.removeService(hostname.c_str(),"http", "tcp")) {
+            log_esp3d("failed");
+        }
 #endif // ARDUINO_ARCH_ESP8266
 #if defined(ARDUINO_ARCH_ESP32)
         mdns_service_remove("_http", "_tcp");

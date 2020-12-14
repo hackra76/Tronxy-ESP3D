@@ -44,6 +44,7 @@ void dateTime (uint16_t* date, uint16_t* dtime)
 time_t getDateTimeFile(sdfat::File & filehandle)
 {
     static time_t dt = 0;
+#ifdef SD_TIMESTAMP_FEATURE
     struct tm timefile;
     dir_t d;
     if(filehandle) {
@@ -65,6 +66,7 @@ time_t getDateTimeFile(sdfat::File & filehandle)
     } else {
         log_esp3d("check file for stat failed");
     }
+#endif //SD_TIMESTAMP_FEATURE
     return dt;
 }
 
@@ -152,6 +154,9 @@ uint64_t ESP_SD::totalBytes()
 
 uint64_t ESP_SD::usedBytes()
 {
+    if(freeBytes() >totalBytes() ) {
+        _sizechanged = true;
+    }
     return totalBytes() - freeBytes();
 }
 
@@ -637,13 +642,16 @@ bool ESP_SD::exists(const char* path)
     if (strcmp(path, "/") == 0) {
         return _started;
     }
+    log_esp3d("%s exists ?", path);
     res = SD.exists(path);
     if (!res) {
+        log_esp3d("Seems not -  trying open it");
         ESP_SDFile root = ESP_SD::open(path, ESP_FILE_READ);
         if (root) {
             res = root.isDirectory();
         }
     }
+    log_esp3d("Seems %s", res?"yes":"no");
     return res;
 }
 

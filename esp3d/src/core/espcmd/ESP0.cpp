@@ -41,7 +41,7 @@ const char * help[]= {"[ESP] - display this help",
                       "[ESP110](State) - display/set radio state which can be STA, AP, OFF",
 #endif // WIFI_FEATURE || BLUETOOTH_FEATURE || ETH_FEATURE
 #if defined( WIFI_FEATURE) || defined (ETH_FEATURE)
-                      "[ESP111]display current IP",
+                      "[ESP111](header)display current IP",
 #endif //WIFI_FEATURE || ETH_FEATURE
 #if defined(WIFI_FEATURE) || defined(ETH_FEATURE) || defined(BT_FEATURE)
                       "[ESP112](Hostname) - display/set Hostname",
@@ -58,7 +58,7 @@ const char * help[]= {"[ESP] - display this help",
 #if defined(TIMESTAMP_FEATURE)
                       "[ESP140](SYNC) (srv1=xxxx) (srv2=xxxx) (srv3=xxxx) (zone=xxx) (dst=YES/NO) (time=YYYY-MM-DD#H24:MM:SS) - sync/display/set current time/time servers",
 #endif //TIMESTAMP_FEATURE
-                      "[ESP150](time) - display/set boot delay in ms",
+                      "[ESP150](delay=time) (verbose=ON/OFF)- display/set boot delay in ms / Verbose boot",
 #if defined(WS_DATA_FEATURE)
                       "[ESP160](State) - display/set WebSocket state which can be ON, OFF, CLOSE",
                       "[ESP161](Port) - display/set WebSocket port",
@@ -76,6 +76,9 @@ const char * help[]= {"[ESP] - display this help",
 #ifdef DIRECT_PIN_FEATURE
                       "[ESP201](Pxxx) (Vxxx) (PULLUP=YES RAW=YES ANALOG=NO ANALOG_RANGE=255 CLEARCHANNELS=NO) - read / set  pin value",
 #endif //DIRECT_PIN_FEATURE
+#if defined (SD_DEVICE)
+                      "[ESP202] - display / set  SD Card  SD card Speed factor (1 2 4 6 8 16 32)",
+#endif //SD_DEVICE
 #ifdef SENSOR_DEVICE
                       "[ESP210](type=NONE/xxx) (interval=xxxx) - display and read/set SENSOR info",
 #endif //SENSOR_DEVICE
@@ -94,6 +97,9 @@ const char * help[]= {"[ESP] - display this help",
                       "[ESP290](delay in ms) - do a pause",
                       "[ESP400] - display ESP3D settings in JSON",
                       "[ESP401]P=(position) T=(type) V=(value) - Set specific setting",
+#ifdef SD_UPDATE_FEATURE
+                      "[ESP402](State) - display/set check update at boot from SD which can be ON, OFF",
+#endif //SD_UPDATE_FEATURE
 #if defined (WIFI_FEATURE)
                       "[ESP410](plain) - display available AP list (limited to 30) in plain/JSON",
 #endif //WIFI_FEATURE
@@ -133,6 +139,7 @@ const char * help[]= {"[ESP] - display this help",
 #ifdef BUZZER_DEVICE
                       "[ESP910](ENABLE/DISABLE) - display/set buzzer state",
 #endif //BUZZER_DEVICE
+                      "[ESP920](client)=(ON/OFF) - display/set SERIAL / LCD / PRINTER_LCD/ WEBSOCKET / TELNET /BT / ALL client state",
                       ""
                      };
 const uint cmdlist[]= {0,

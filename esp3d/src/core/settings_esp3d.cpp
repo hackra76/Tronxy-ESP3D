@@ -86,8 +86,10 @@
 #define DEFAULT_INTERNET_TIME       0
 #endif //TIMESTAMP_FEATURE
 
+
 #define DEFAULT_SETUP   0
 
+#define DEFAULT_VERBOSE_BOOT    0
 #define DEFAULT_ESP_BYTE        0
 #define DEFAULT_ESP_STRING_SIZE 0
 #if defined (WIFI_FEATURE) || defined (ETH_FEATURE)
@@ -104,14 +106,8 @@
 #define DEFAULT_TIME_ZONE       0
 #define DEFAULT_TIME_DST        0
 #define DEFAULT_SD_MOUNT        ESP_SD_ROOT
-#define DEFAULT_DIRECT_SD_CHECK 0
 #define DEFAULT_SD_CHECK_UPDATE_AT_BOOT 1
 #define DEFAULT_SENSOR_TYPE     NO_SENSOR_DEVICE
-#ifdef SD_DEVICE
-#define DEFAULT_SD_DEVICE_TYPE  SD_DEVICE_CONNECTION
-#else
-#define DEFAULT_SD_DEVICE_TYPE  ESP_NO_SD
-#endif //SD_DEVICE
 #define DEFAULT_HTTP_ON         1
 #define DEFAULT_FTP_ON          1
 #define DEFAULT_TELNET_ON       1
@@ -174,6 +170,7 @@ const uint8_t DEFAULT_ADDRESS_VALUE[]   =  {0, 0, 0, 0};
 #endif //WIFI_FEATURE || ETH_FEATURE
 
 uint8_t Settings_ESP3D::_FirmwareTarget = UNKNOWN_FW;
+bool Settings_ESP3D::_isverboseboot = DEFAULT_VERBOSE_BOOT;
 
 bool Settings_ESP3D::begin()
 {
@@ -182,7 +179,16 @@ bool Settings_ESP3D::begin()
     }
     //get target FW
     Settings_ESP3D::GetFirmwareTarget(true);
+    Settings_ESP3D::isVerboseBoot(true);
     return true;
+}
+
+bool Settings_ESP3D::isVerboseBoot(bool fromsettings)
+{
+    if(fromsettings) {
+        _isverboseboot = read_byte (ESP_VERBOSE_BOOT);
+    }
+    return _isverboseboot;
 }
 
 uint8_t Settings_ESP3D::GetFirmwareTarget(bool fromsettings)
@@ -205,9 +211,7 @@ uint8_t Settings_ESP3D::GetSDDevice()
 const char* Settings_ESP3D::GetFirmwareTargetShortName()
 {
     static String response;
-    if ( _FirmwareTarget == REPETIER4DV) {
-        response = F ("repetier4davinci");
-    } else if ( _FirmwareTarget == REPETIER) {
+    if  ( _FirmwareTarget == REPETIER) {
         response = F ("repetier");
     } else if ( _FirmwareTarget == MARLIN) {
         response = F ("marlin");
@@ -230,6 +234,9 @@ uint8_t Settings_ESP3D::get_default_byte_value(int pos)
     switch(pos) {
     case ESP_RADIO_MODE:
         res = DEFAULT_ESP_RADIO_MODE;
+        break;
+    case ESP_VERBOSE_BOOT:
+        res = DEFAULT_VERBOSE_BOOT;
         break;
     case ESP_SETUP:
         res = DEFAULT_SETUP;
@@ -262,26 +269,28 @@ uint8_t Settings_ESP3D::get_default_byte_value(int pos)
         res = DEFAULT_STA_IP_MODE;
         break;
 #endif //WIFI_FEATURE || ETH_FEATURE
-        //case ESP_AP_PHY_MODE:
-        //case ESP_STA_PHY_MODE:
-        //    res = DEFAULT_PHY_MODE;
-        //    break;
-        //case ESP_SLEEP_MODE:
-        //    res = DEFAULT_SLEEP_MODE;
-        //    break;
 #if defined (WIFI_FEATURE)
     case ESP_AP_CHANNEL:
         res = DEFAULT_AP_CHANNEL;
         break;
-        //case ESP_AP_AUTH_TYPE:
-        //    res = DEFAULT_AUTH_TYPE;
-        //    break;
-        //case ESP_SSID_VISIBLE:
-        //    res = DEFAULT_SSID_VISIBLE;
-        //    break;
 #endif //WIFI_FEATURE
-    case ESP_OUTPUT_FLAG:
-        res = DEFAULT_OUTPUT_FLAG;
+    case ESP_SERIAL_FLAG:
+        res = DEFAULT_SERIAL_OUTPUT_FLAG;
+        break;
+    case ESP_PRINTER_LCD_FLAG:
+        res = DEFAULT_PRINTER_LCD_FLAG;
+        break;
+    case ESP_WEBSOCKET_FLAG:
+        res = DEFAULT_WEBSOCKET_FLAG;
+        break;
+    case ESP_TELNET_FLAG:
+        res = DEFAULT_TELNET_FLAG;
+        break;
+    case ESP_BT_FLAG:
+        res = DEFAULT_BT_FLAG;
+        break;
+    case ESP_LCD_FLAG:
+        res = DEFAULT_LCD_FLAG;
         break;
 #ifdef FTP_FEATURE
     case ESP_FTP_ON:
@@ -310,14 +319,8 @@ uint8_t Settings_ESP3D::get_default_byte_value(int pos)
     case ESP_SD_MOUNT:
         res = DEFAULT_SD_MOUNT;
         break;
-    case ESP_DIRECT_SD_CHECK:
-        res = DEFAULT_DIRECT_SD_CHECK;
-        break;
     case ESP_SD_CHECK_UPDATE_AT_BOOT:
         res = DEFAULT_SD_CHECK_UPDATE_AT_BOOT;
-        break;
-    case ESP_SD_DEVICE_TYPE:
-        res = DEFAULT_SD_DEVICE_TYPE;
         break;
 #endif //SD_DEVICE
     case ESP_TARGET_FW:
@@ -1026,6 +1029,8 @@ bool Settings_ESP3D::reset()
 
     //Setup done (internal only)
     Settings_ESP3D::write_byte(ESP_SETUP,Settings_ESP3D::get_default_byte_value(ESP_SETUP));
+    //Verbose boot
+    Settings_ESP3D::write_byte(ESP_VERBOSE_BOOT,Settings_ESP3D::get_default_byte_value(ESP_VERBOSE_BOOT));
 
 #if defined(DISPLAY_DEVICE) && defined(DISPLAY_TOUCH_DRIVER)
     //Calibration done (internal only)
@@ -1134,13 +1139,20 @@ bool Settings_ESP3D::reset()
 #endif //AUTHENTICATION_FEATURE
     //Target FW
     Settings_ESP3D::write_byte(ESP_TARGET_FW,Settings_ESP3D::get_default_byte_value(ESP_TARGET_FW));
-    //Output flag
-    Settings_ESP3D::write_byte(ESP_OUTPUT_FLAG,Settings_ESP3D::get_default_byte_value(ESP_OUTPUT_FLAG));
+    //Output flags
+    Settings_ESP3D::write_byte(ESP_SERIAL_FLAG,Settings_ESP3D::get_default_byte_value(ESP_SERIAL_FLAG));
+    Settings_ESP3D::write_byte(ESP_PRINTER_LCD_FLAG,Settings_ESP3D::get_default_byte_value(ESP_PRINTER_LCD_FLAG));
+    Settings_ESP3D::write_byte(ESP_WEBSOCKET_FLAG,Settings_ESP3D::get_default_byte_value(ESP_WEBSOCKET_FLAG));
+    Settings_ESP3D::write_byte(ESP_TELNET_FLAG,Settings_ESP3D::get_default_byte_value(ESP_TELNET_FLAG));
+    Settings_ESP3D::write_byte(ESP_BT_FLAG,Settings_ESP3D::get_default_byte_value(ESP_BT_FLAG));
+    Settings_ESP3D::write_byte(ESP_LCD_FLAG,Settings_ESP3D::get_default_byte_value(ESP_LCD_FLAG));
 #ifdef SD_DEVICE
-    //Direct SD
-    Settings_ESP3D::write_byte(ESP_SD_DEVICE_TYPE,Settings_ESP3D::get_default_byte_value(ESP_SD_DEVICE_TYPE));
     //SPI SD Divider
     Settings_ESP3D::write_byte(ESP_SD_SPEED_DIV,Settings_ESP3D::get_default_byte_value(ESP_SD_SPEED_DIV));
+#ifdef SD_UPDATE_FEATURE
+    //SD Update feature
+    Settings_ESP3D::write_byte(ESP_SD_CHECK_UPDATE_AT_BOOT,Settings_ESP3D::get_default_byte_value(ESP_SD_CHECK_UPDATE_AT_BOOT));
+#endif //SD_UPDATE_FEATURE
 #endif //SD_DEVICE
 
 #ifdef TIMESTAMP_FEATURE
