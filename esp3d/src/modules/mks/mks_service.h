@@ -1,5 +1,5 @@
 /*
-  version.h - ESP3D version file
+  mks_service.cpp -  mks communication service functions class
 
   Copyright (c) 2014 Luc Lebosse. All rights reserved.
 
@@ -18,11 +18,30 @@
   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
-#ifndef _VERSION_ESP3D_H
-#define _VERSION_ESP3D_H
+#ifndef _MKS_SERVICES_H
+#define _MKS_SERVICES_H
 
-//version and sources location
-#define FW_VERSION "3.0.0.a77"
-#define REPOSITORY "https://github.com/luc-github/ESP3D/tree/3.0"
+#define MKS_FRAME_SIZE  1024
 
-#endif //_VERSION_ESP3D_H
+class MKSService
+{
+public:
+    static bool begin();
+    static bool  sendNetworkFrame();
+    static void handle();
+    static void end();
+    static bool started()
+    {
+        return _started;
+    }
+private:
+    static void clearFrame();
+    static bool canSendFrame();
+    static bool _started;
+    static char _frame[MKS_FRAME_SIZE];
+    static char _moduleId[21];
+};
+
+
+#endif //_SERIAL_SERVICES_H
+

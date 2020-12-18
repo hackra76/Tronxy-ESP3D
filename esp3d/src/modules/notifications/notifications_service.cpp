@@ -46,11 +46,19 @@ typedef axTLS::WiFiClientSecure TSecureClient;
 #include <WiFiClientSecure.h>
 typedef WiFiClientSecure TSecureClient;
 #endif //USING_AXTLS
+#include <ESP8266WiFi.h>
+#include <ESP8266HTTPClient.h>
+#include <libb64/cdecode.h>
 #endif //ARDUINO_ARCH_ESP8266
 
 #if defined(ARDUINO_ARCH_ESP32)
 #include <WiFiClientSecure.h>
 typedef WiFiClientSecure TSecureClient;
+#include <WiFi.h>
+#include <HTTPClient.h>
+extern "C" {
+#include "libb64/cdecode.h"
+}
 #endif //ARDUINO_ARCH_ESP32
 
 #include <base64.h>
@@ -464,6 +472,35 @@ bool NotificationsService::getEmailFromSettings()
     return true;
 }
 
+bool NotificationsService::decode64(const char* encodedURL,  char *decodedURL)
+{
+    size_t out_len = 0;
+    out_len =  base64_decode_chars(encodedURL, strlen(encodedURL), decodedURL);
+    log_esp3d("URLE: %s", encodedURL);
+    log_esp3d("URLD: %s", decodedURL);
+    return (out_len>0);
+}
+
+bool NotificationsService::GET(const char * URL64)
+{
+    //TODO do we need https client ?
+    WiFiClient client;
+    HTTPClient http; //must be declared after WiFiClient for correct destruction order, because used by http.begin(client,...)
+    char * decodedurl[255];
+    bool res = false;
+    if (decode64(URL64, (char*)decodedurl)) {
+        http.begin(client, (const char*)decodedurl);
+        int httpCode = http.GET();
+        log_esp3d("HTTP code: %d", httpCode);
+        if (httpCode > 0) {
+            if(httpCode == HTTP_CODE_OK) {
+                res = true;
+            }
+        }
+        http.end();
+    }
+    return res;
+}
 
 bool NotificationsService::begin()
 {

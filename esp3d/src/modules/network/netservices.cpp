@@ -72,6 +72,10 @@ DNSServer dnsServer;
 #ifdef CAMERA_DEVICE
 #include "../camera/camera.h"
 #endif //CAMERA_DEVICE
+#if COMMUNICATION_PROTOCOL == MKS_SERIAL
+#include "../mks/mks_service.h"
+#endif //COMMUNICATION_PROTOCOL == MKS_SERIAL
+
 bool NetServices::_started = false;
 bool NetServices::_restart = false;
 
@@ -82,6 +86,9 @@ bool NetServices::begin()
     String hostname = Settings_ESP3D::read_string(ESP_HOSTNAME);
     ESP3DOutput output(ESP_ALL_CLIENTS);
     end();
+#if COMMUNICATION_PROTOCOL == MKS_SERIAL
+    MKSService::begin();
+#endif //COMMUNICATION_PROTOCOL == MKS_SERIAL
 #ifdef TIMESTAMP_FEATURE
     if (WiFi.getMode() != WIFI_AP) {
         if(!timeserver.begin()) {
@@ -258,9 +265,7 @@ bool NetServices::begin()
     if(WiFi.getMode() != WIFI_AP) {
         // Add service to MDNS-SD
         log_esp3d("Add mdns service http / tcp port %d", HTTP_Server::port());
-        if (!MDNS.addService("http", "tcp", HTTP_Server::port())) {
-            log_esp3d("failed");
-        }
+        MDNS.addService("http", "tcp", HTTP_Server::port());
         //Add TXT records
         MDNS.addServiceTxt("http", "tcp", "ESP3D", FW_VERSION);
     }
@@ -302,7 +307,9 @@ bool NetServices::begin()
         end();
     }
     Hal::wait(1000);
+#if COMMUNICATION_PROTOCOL != MKS_SERIAL
     output.printMSG(NetConfig::localIP().c_str());
+#endif //#if COMMUNICATION_PROTOCOL == MKS_SERIAL
     _started = res;
     return _started;
 }
@@ -313,6 +320,9 @@ void NetServices::end()
         return;
     }
     _started = false;
+#if COMMUNICATION_PROTOCOL == MKS_SERIAL
+    MKSService::end();
+#endif //COMMUNICATION_PROTOCOL == MKS_SERIAL
 #ifdef CAMERA_DEVICE
     esp3d_camera.end();
 #endif //CAMERA_DEVICE
@@ -373,6 +383,9 @@ void NetServices::end()
 void NetServices::handle()
 {
     if (_started) {
+#if COMMUNICATION_PROTOCOL == MKS_SERIAL
+        MKSService::handle();
+#endif //COMMUNICATION_PROTOCOL == MKS_SERIAL
 #ifdef MDNS_FEATURE
 #if defined(ARDUINO_ARCH_ESP8266)
         MDNS.update();
