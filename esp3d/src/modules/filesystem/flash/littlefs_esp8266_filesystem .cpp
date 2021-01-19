@@ -18,7 +18,7 @@ littlefs_esp8266_filesystem.cpp - ESP3D littlefs filesystem configuration class
   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
 #include "../../../include/esp3d_config.h"
-#if (FILESYSTEM_FEATURE == ESP_LITTLEFS_FILESYSTEM)
+#if (FILESYSTEM_FEATURE == ESP_LITTLEFS_FILESYSTEM) && defined(ARDUINO_ARCH_ESP8266)
 #include "../esp_filesystem.h"
 #include "../../../core/genLinkedList.h"
 #include <FS.h>
