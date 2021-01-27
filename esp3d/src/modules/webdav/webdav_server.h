@@ -1,5 +1,5 @@
 /*
-  version.h - ESP3D version file
+  webdav_server.h -  webdav service functions class
 
   Copyright (c) 2014 Luc Lebosse. All rights reserved.
 
@@ -18,11 +18,37 @@
   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
-#ifndef _VERSION_ESP3D_H
-#define _VERSION_ESP3D_H
+#ifndef _WEBDAV_SERVER_H
+#define _WEBDAV_SERVER_H
 
-//version and sources location
-#define FW_VERSION "3.0.0.a88"
-#define REPOSITORY "https://github.com/luc-github/ESP3D/tree/3.0"
+#include "ESPWebDAV.h"
+class WiFiServer;
 
-#endif //_VERSION_ESP3D_H
+class Webdav_Server
+{
+public:
+    Webdav_Server();
+    ~Webdav_Server();
+    bool begin();
+    void end();
+    void handle();
+    bool started();
+    bool isConnected();
+    const char* clientIPAddress();
+    uint16_t port()
+    {
+        return _port;
+    }
+    void dir();
+    void closeClient();
+private:
+    bool _started;
+    uint16_t _port;
+    WiFiServer _tcpserver;
+    ESPWebDAV _dav;
+};
+
+extern Webdav_Server webdav_server;
+
+#endif
+
